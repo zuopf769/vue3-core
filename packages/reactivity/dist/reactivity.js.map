@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../shared/src/index.ts", "../src/index.ts"],
+  "sourcesContent": ["export const isObject = (value: unknown): value is Record<any, any> => {\n  // return Object.prototype.toString.call(value) === '[object Object]';\n  return value !== null && typeof value === \"object\";\n};\n", "import { isObject } from \"@vue/shared\";\n\nconsole.log(isObject({}));\n"],
+  "mappings": ";AAAO,IAAM,WAAW,CAAC,UAA8C;AAErE,SAAO,UAAU,QAAQ,OAAO,UAAU;AAC5C;;;ACDA,QAAQ,IAAI,SAAS,CAAC,CAAC,CAAC;",
+  "names": []
+}
