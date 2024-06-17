@@ -15,7 +15,7 @@ var muableHandlers = {
   set(target, key, value, receiver) {
     Reflect.set(target, key, value, receiver);
     return true;
-  },
+  }
 };
 
 // packages/reactivity/src/reactivity.ts
@@ -31,5 +31,7 @@ function reactive(target) {
   reactiveMap.set(target, proxy);
   return proxy;
 }
-export { reactive };
+export {
+  reactive
+};
 //# sourceMappingURL=reactivity.js.map

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <script type="module">
+      // 原生的使用
+      import {
+        reactive,
+        effect,
+      } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      let state = reactive({ name: "zuopf", age: 30 });
+
+      effect(() => {
+        console.log("effect app1");
+        document.getElementById(
+          "app"
+        ).innerText = `${state.name} - ${state.age}`;
+      });
+
+      // 自定义的
+      import { reactive as reactive2 } from "./reactivity.js";
+      const nstate = reactive2({ name: "zuopf", age: 30, flag: true });
+
+      effect(() => {
+        console.log("effect app2");
+        document.getElementById(
+          "app2"
+        ).innerHTML = `${nstate.name} - ${nstate.age}`;
+      });
+    </script>
+  </body>
+</html>
