@@ -3,10 +3,32 @@ var isObject = (value) => {
   return value !== null && typeof value === "object";
 };
 
+// packages/reactivity/src/effect.ts
+var activeEffect = void 0;
+function effect(fn) {
+  const _effect = new ReactiveEffect(fn);
+  _effect.run();
+}
+var ReactiveEffect = class {
+  // 默认会将fn挂载到类的实例上
+  constructor(fn) {
+    this.fn = fn;
+  }
+  run() {
+    try {
+      activeEffect = this;
+      return this.fn();
+    } finally {
+      activeEffect = void 0;
+    }
+  }
+};
+
 // packages/reactivity/src/baseHandlers.ts
 var muableHandlers = {
   // receiver是代理对象
   get(target, key, receiver) {
+    console.log("activeEffect \u4F9D\u8D56\u6536\u96C6=>", activeEffect);
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
@@ -32,6 +54,9 @@ function reactive(target) {
   return proxy;
 }
 export {
+  ReactiveEffect,
+  activeEffect,
+  effect,
   reactive
 };
 //# sourceMappingURL=reactivity.js.map

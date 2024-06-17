@@ -1,3 +1,7 @@
+// 全局变量, 用来记录当前正在执行的effect
+// 为了方便执行effect的时候依赖收集
+export let activeEffect = undefined;
+
 export function effect(fn) {
   // 创建一个响应式effect, 并且让effect立即执行
   const _effect = new ReactiveEffect(fn);
@@ -9,6 +13,11 @@ export class ReactiveEffect {
   constructor(public fn) {}
 
   run() {
-    return this.fn();
+    try {
+      activeEffect = this;
+      return this.fn();
+    } finally {
+      activeEffect = undefined;
+    }
   }
 }

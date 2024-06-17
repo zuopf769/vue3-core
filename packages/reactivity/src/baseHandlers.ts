@@ -1,3 +1,5 @@
+import { activeEffect } from "./effect";
+
 export enum ReactiveFlags {
   "IS_REACTIVE" = "__v_isReactive",
 }
@@ -8,6 +10,8 @@ export const muableHandlers: ProxyHandler<Record<any, any>> = {
     // 不能直接返回target.key，因为target是被代理的原始对象，如果直接返回target.key，那么后续的set、get操作会直接修改原始对象，而不是代理对象
     // return target.key;
 
+    // 取值的时候，让属性和effect产生关系
+    console.log("activeEffect 依赖收集=>", activeEffect);
     if (key === ReactiveFlags.IS_REACTIVE) {
       return true;
     }
