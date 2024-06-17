@@ -13,13 +13,17 @@ var ReactiveEffect = class {
   // 默认会将fn挂载到类的实例上
   constructor(fn) {
     this.fn = fn;
+    // 用来记录effect的父effect
+    this.parent = null;
   }
   run() {
     try {
+      this.parent = activeEffect;
       activeEffect = this;
       return this.fn();
     } finally {
-      activeEffect = void 0;
+      activeEffect = this.parent;
+      this.parent = null;
     }
   }
 };

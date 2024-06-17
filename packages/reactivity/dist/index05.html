@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <div id="app3"></div>
+    <script type="module">
+      // // 原生的使用
+      // import {
+      //   reactive,
+      //   effect,
+      // } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      // let state = reactive({ name: "zuopf", age: 30 });
+
+      // effect(() => {
+      //   console.log("effect app1");
+      //   document.getElementById(
+      //     "app"
+      //   ).innerText = `${state.name} - ${state.age}`;
+      // });
+
+      // 自定义的
+      import {
+        reactive as reactive2,
+        effect as effect2,
+      } from "./reactivity.js";
+      const nstate = reactive2({ name: "zuopf", age: 30, flag: true });
+
+      // name和age是同一个effect
+      effect2(() => {
+        console.log("effect app");
+        document.getElementById(
+          "app"
+        ).innerHTML = `${nstate.name} ${nstate.age}`;
+
+        // 嵌套effect, 该effect的父effect是上面的effect
+        effect2(() => {
+          console.log("effect app2");
+          document.getElementById("app2").innerHTML = ` ${nstate.age}`;
+        });
+      });
+
+      // 和上面的effect不是同一个
+      effect2(() => {
+        console.log("effect app3");
+        document.getElementById("app3").innerHTML = ` ${nstate.flag}`;
+      });
+    </script>
+  </body>
+</html>

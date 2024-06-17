@@ -8,16 +8,28 @@ export function effect(fn) {
   _effect.run();
 }
 
+// 响应式effect
 export class ReactiveEffect {
+  // 用来记录effect的父effect
+  parent = null;
   // 默认会将fn挂载到类的实例上
   constructor(public fn) {}
 
   run() {
     try {
+      // 正在执行的effect的父effect为当前effect
+      // 不是嵌套的effect, 父effect为null
+      this.parent = activeEffect;
+      // 正在执行的effect为当前effect
       activeEffect = this;
       return this.fn();
     } finally {
-      activeEffect = undefined;
+      // 执行完effect后的清理工作
+      // activeEffect = null;
+      // 执行完effect后, 将activeEffect指向父effect
+      activeEffect = this.parent;
+      // 执行完effect后, 将父effect置为null
+      this.parent = null;
     }
   }
 }
