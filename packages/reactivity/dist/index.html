@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <script type="module">
+      // 原生的使用
+      import {
+        reactive,
+        effect,
+      } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      const state = reactive({ name: "zuopf", age: 30 }); // 响应式数据 可以再effect中使用
+      // effect 会默认执行一次，数据变化了会在执行一次 （数据变化导致视图更新）
+      effect(() => {
+        app.innerHTML = state.name + "," + state.age;
+      });
+      setTimeout(() => {
+        state.age++;
+      }, 2000);
+
+      //   import { reactive, effect } from "./reactivity.js";
+      //   const data = { name: "jw", age: 30, flag: true };
+      //   const state = reactive(data);
+
+      //   effect(() => {
+      //     // flag , name
+      //     // flag , age ,取消掉name的收集
+      //     // diff
+      //     app1.innerHTML = state.flag ? state.name : state.age;
+      //     console.log("run");
+      //   });
+
+      //   setTimeout(() => {
+      //     state.flag = false; // 会显示age
+      //     setTimeout(() => {
+      //       console.log("改了name，原则不应该触发effect");
+      //       state.name = "abc"; // 需要更新吗？
+      //     }, 1000);
+      //   }, 1000);
+    </script>
+  </body>
+</html>

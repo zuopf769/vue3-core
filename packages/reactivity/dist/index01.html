@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <script type="module">
+      // 原生的使用
+      import { reactive } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      let obj = { name: "zuopf", age: 30 };
+      let state = reactive(obj);
+      let state2 = reactive(obj);
+
+      // 同一个对象被多次调用，返回的是同一个代理后的对象
+      // 实现方案是缓存，第一次调用时，生成代理对象，后续调用直接从缓存中取
+      console.log("原生", state === state2);
+
+      // 自定义的
+      import { reactive as reactive2 } from "./reactivity.js";
+      const ndata = { name: "jw", age: 30, flag: true };
+      const nstate = reactive2(ndata);
+      const nstate2 = reactive2(ndata);
+
+      console.log("自定义", nstate === nstate2);
+    </script>
+  </body>
+</html>
