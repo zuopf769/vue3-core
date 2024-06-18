@@ -76,13 +76,16 @@ function track(target, type, key) {
   }
 }
 function trigger(target, type, key, newValue, oldValue) {
+  debugger;
   const depsMap = targetMap.get(target);
   if (!depsMap) {
     return;
   }
   const effects = depsMap.get(key);
   effects && effects.forEach((effect2) => {
-    effect2.run();
+    if (effect2 !== activeEffect) {
+      effect2.run();
+    }
   });
 }
 

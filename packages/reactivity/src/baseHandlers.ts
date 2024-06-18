@@ -62,15 +62,20 @@ function track(target, type, key) {
   }
 }
 export function trigger(target, type, key?, newValue?, oldValue?) {
+  debugger;
   const depsMap = targetMap.get(target); // 获取对应的映射表 {属性1：[effect1..],属性2:[effect2...] }
   if (!depsMap) {
     //没有被收集过直接返回
     return;
   }
   const effects = depsMap.get(key); // 查看该属性有没有被effect收集 | 查看该属性收集的effect
+  // 执行该属性收集的所有effect
   effects &&
     effects.forEach((effect) => {
-      // 执行该属性收集的所有effect
-      effect.run();
+      // 避免死循环
+      // 当前执行的effect会放到全局上；当又重新执行当前effect时， 则不再执行
+      if (effect !== activeEffect) {
+        effect.run();
+      }
     });
 }

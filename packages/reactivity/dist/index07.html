@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <div id="app3"></div>
+    <script type="module">
+      // // 原生的使用
+      // import {
+      //   reactive,
+      //   effect,
+      // } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      // let state = reactive({ name: "zuopf", age: 30 });
+
+      // effect(() => {
+      //   console.log("effect app1");
+      //   document.getElementById(
+      //     "app"
+      //   ).innerText = `${state.name} - ${state.age}`;
+      // });
+
+      // 自定义的
+      import {
+        reactive as reactive2,
+        effect as effect2,
+      } from "./reactivity.js";
+      const nstate = reactive2({ name: "zuopf", age: 30, flag: true });
+
+      // 当前执行的effect
+      effect2(() => {
+        console.log("effect flag");
+        document.getElementById("app3").innerHTML = ` ${nstate.name}`;
+        // 触发trigger，又会执行effect，所以会无限循环
+        nstate.name = Math.random();
+      });
+    </script>
+  </body>
+</html>
