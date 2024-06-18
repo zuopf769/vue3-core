@@ -13,11 +13,19 @@ var ReactiveEffect = class {
   // 默认会将fn挂载到类的实例上
   constructor(fn) {
     this.fn = fn;
+    // stop停止effect会置为false
+    this.active = true;
+    // 收集effect中使用到的属性
+    // effect中要记录哪些属性是在effect中调用的
+    this.deps = [];
     // 用来记录effect的父effect
     this.parent = null;
   }
   run() {
     try {
+      if (!this.active) {
+        return this.fn();
+      }
       this.parent = activeEffect;
       activeEffect = this;
       return this.fn();
@@ -36,13 +44,47 @@ var muableHandlers = {
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
-    return Reflect.get(target, key, receiver);
+    const res = Reflect.get(target, key, receiver);
+    track(target, "get", key);
+    return res;
   },
   set(target, key, value, receiver) {
-    Reflect.set(target, key, value, receiver);
-    return true;
+    let oldValue = target[key];
+    const result = Reflect.set(target, key, value, receiver);
+    if (oldValue !== value) {
+      trigger(target, "set", key, value, oldValue);
+    }
+    return result;
   }
 };
+var targetMap = /* @__PURE__ */ new WeakMap();
+function track(target, type, key) {
+  if (activeEffect) {
+    let depsMap = targetMap.get(target);
+    if (!depsMap) {
+      targetMap.set(target, depsMap = /* @__PURE__ */ new Map());
+    }
+    let dep = depsMap.get(key);
+    if (!dep) {
+      depsMap.set(key, dep = /* @__PURE__ */ new Set());
+    }
+    let shouldTrack = dep.has(activeEffect);
+    if (!shouldTrack) {
+      dep.add(activeEffect);
+      activeEffect.deps.push(dep);
+    }
+  }
+}
+function trigger(target, type, key, newValue, oldValue) {
+  const depsMap = targetMap.get(target);
+  if (!depsMap) {
+    return;
+  }
+  const effects = depsMap.get(key);
+  effects && effects.forEach((effect2) => {
+    effect2.run();
+  });
+}
 
 // packages/reactivity/src/reactivity.ts
 var reactiveMap = /* @__PURE__ */ new WeakMap();

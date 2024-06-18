@@ -3,25 +3,39 @@
 export let activeEffect = undefined;
 
 export function effect(fn) {
+  // 将用户的函数，拿到变成一个响应式的函数
   // 创建一个响应式effect, 并且让effect立即执行
   const _effect = new ReactiveEffect(fn);
+  // 默认让用户的函数执行一次
   _effect.run();
 }
 
 // 响应式effect
 export class ReactiveEffect {
+  // stop停止effect会置为false
+  public active = true;
+  // 收集effect中使用到的属性
+  // effect中要记录哪些属性是在effect中调用的
+  public deps = [];
   // 用来记录effect的父effect
-  parent = null;
+  public parent = null;
   // 默认会将fn挂载到类的实例上
   constructor(public fn) {}
 
   run() {
+    // 当运行的时候 我们需要将属性和对应的effect关联起来
+    // 利用js是单线程的特性，先放在全局，在取值
     try {
+      // 不是激活状态
+      if (!this.active) {
+        return this.fn();
+      }
       // 正在执行的effect的父effect为当前effect
       // 不是嵌套的effect, 父effect为null
       this.parent = activeEffect;
       // 正在执行的effect为当前effect
       activeEffect = this;
+      // 触发属性的get 依赖收集，在调用用户函数的时候会发生取值操作
       return this.fn();
     } finally {
       // 执行完effect后的清理工作
