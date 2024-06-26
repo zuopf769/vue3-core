@@ -11,7 +11,7 @@ export const muableHandlers: ProxyHandler<Record<any, any>> = {
     // return target[key];
 
     // 取值的时候，让属性和effect产生关系
-    console.log("activeEffect 依赖收集=>", activeEffect);
+    console.log("activeEffect 依赖收集=>", key, activeEffect);
     if (key === ReactiveFlags.IS_REACTIVE) {
       return true;
     }
@@ -62,20 +62,25 @@ function track(target, type, key) {
   }
 }
 export function trigger(target, type, key?, newValue?, oldValue?) {
-  debugger;
   const depsMap = targetMap.get(target); // 获取对应的映射表 {属性1：[effect1..],属性2:[effect2...] }
   if (!depsMap) {
     //没有被收集过直接返回
     return;
   }
-  const effects = depsMap.get(key); // 查看该属性有没有被effect收集 | 查看该属性收集的effect
+  const deps = depsMap.get(key); // 查看该属性有没有被effect收集 | 查看该属性收集的effect
   // 执行该属性收集的所有effect
-  effects &&
+  if (deps) {
+    // 循环之前先拷贝，避免删除添加操作是同一个引用导致死循环
+    const effects = [...deps];
     effects.forEach((effect) => {
       // 避免死循环
       // 当前执行的effect会放到全局上；当又重新执行当前effect时， 则不再执行
       if (effect !== activeEffect) {
+        // 执行effect，如不处理，会有重复依赖收集的问题
         effect.run();
       }
     });
+  }
 }
+
+// 默认执行了同一个引用set，在当前的set中清除了一个effect，又向此set中添加了一项，循环同一个引用set会死循环

@@ -9,6 +9,13 @@ function effect(fn) {
   const _effect = new ReactiveEffect(fn);
   _effect.run();
 }
+function cleanupEffect(effect2) {
+  let { deps } = effect2;
+  for (let i = 0; i < deps.length; i++) {
+    deps[i].delete(effect2);
+  }
+  effect2.deps.length = 0;
+}
 var ReactiveEffect = class {
   // 默认会将fn挂载到类的实例上
   constructor(fn) {
@@ -28,6 +35,7 @@ var ReactiveEffect = class {
       }
       this.parent = activeEffect;
       activeEffect = this;
+      cleanupEffect(this);
       return this.fn();
     } finally {
       activeEffect = this.parent;
@@ -40,7 +48,7 @@ var ReactiveEffect = class {
 var muableHandlers = {
   // receiver是代理对象
   get(target, key, receiver) {
-    console.log("activeEffect \u4F9D\u8D56\u6536\u96C6=>", activeEffect);
+    console.log("activeEffect \u4F9D\u8D56\u6536\u96C6=>", key, activeEffect);
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
@@ -76,17 +84,19 @@ function track(target, type, key) {
   }
 }
 function trigger(target, type, key, newValue, oldValue) {
-  debugger;
   const depsMap = targetMap.get(target);
   if (!depsMap) {
     return;
   }
-  const effects = depsMap.get(key);
-  effects && effects.forEach((effect2) => {
-    if (effect2 !== activeEffect) {
-      effect2.run();
-    }
-  });
+  const deps = depsMap.get(key);
+  if (deps) {
+    const effects = [...deps];
+    effects.forEach((effect2) => {
+      if (effect2 !== activeEffect) {
+        effect2.run();
+      }
+    });
+  }
 }
 
 // packages/reactivity/src/reactivity.ts

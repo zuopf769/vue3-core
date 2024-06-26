@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <div id="app2"></div>
+    <div id="app3"></div>
+    <script type="module">
+      // // 原生的使用
+      // import {
+      //   reactive,
+      //   effect,
+      // } from "/node_modules/vue/dist/vue.esm-browser.js";
+
+      // let state = reactive({ name: "zuopf", age: 30 });
+
+      // effect(() => {
+      //   console.log("effect app1");
+      //   document.getElementById(
+      //     "app"
+      //   ).innerText = `${state.name} - ${state.age}`;
+      // });
+
+      // 自定义的
+      import {
+        reactive as reactive2,
+        effect as effect2,
+      } from "./reactivity.js";
+
+      const nstate = reactive2({
+        flag: false,
+        name: "zuopf",
+        age: 30,
+      });
+
+      // effect副作用函数，默认会执行一次，数据变化后再次执行
+      // 第一次effect执行，进行依赖收集: flag 和 age；第一次代理过的属性肯定添加了set和get
+      // 第二次effect执行，进行依赖收集: flag 和 name
+      effect2(() => {
+        console.log("runner");
+        document.getElementById("app3").innerHTML = nstate.flag
+          ? nstate.name
+          : nstate.age;
+      });
+
+      // flag改变，会再次触发effect2执行，进行依赖收集: flag 和 name
+      setTimeout(() => {
+        nstate.flag = !nstate.flag; // flag值变化了
+
+        setTimeout(() => {
+          // 修改了age的值， 还会再次触发effect2执行么
+          // 还是会触发effect，应该将age收集的依赖effect2移除掉，否则更改age还是会触发effect2
+          console.log("修改了age");
+          nstate.age = 31; // age值变化了
+        }, 1000);
+      }, 2000);
+    </script>
+  </body>
+</html>

@@ -10,6 +10,21 @@ export function effect(fn) {
   _effect.run();
 }
 
+function cleanupEffect(effect) {
+  // 每次执行effect之前，我们应该清理掉effect中依赖的所有属性
+
+  // 属性记录了effect {key: new set()}
+  let { deps } = effect;
+  for (let i = 0; i < deps.length; i++) {
+    // deps[i] 是一个set
+    // 因为此次的set和targetMap中的depsMap的set是同一个引用类型, 所以这里删除那边也就删除了
+    deps[i].delete(effect);
+  }
+
+  // 清除effect中deps数组
+  effect.deps.length = 0;
+}
+
 // 响应式effect
 export class ReactiveEffect {
   // stop停止effect会置为false
@@ -36,6 +51,7 @@ export class ReactiveEffect {
       // 正在执行的effect为当前effect
       activeEffect = this;
       // 触发属性的get 依赖收集，在调用用户函数的时候会发生取值操作
+      cleanupEffect(this);
       return this.fn();
     } finally {
       // 执行完effect后的清理工作
