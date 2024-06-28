@@ -8,6 +8,10 @@ export function effect(fn) {
   const _effect = new ReactiveEffect(fn);
   // 默认让用户的函数执行一次
   _effect.run();
+
+  const runner = _effect.run.bind(_effect); // 保证run执行的时候this指向当前的effect实例_effect
+  runner.effect = _effect; // 将effect实例作为自定义属性挂载到runner函数上
+  return runner; // 返回runner让用户手动调用effect的run方法，让effect执行
 }
 
 function cleanupEffect(effect) {
@@ -41,8 +45,9 @@ export class ReactiveEffect {
     // 当运行的时候 我们需要将属性和对应的effect关联起来
     // 利用js是单线程的特性，先放在全局，在取值
     try {
-      // 不是激活状态
+      // 不是激活状态调用run也会执行effect的fn,但是不会走后面的依赖收集
       if (!this.active) {
+        // return了，失活了不会继续执行后面的依赖收集了
         return this.fn();
       }
       // 正在执行的effect的父effect为当前effect
@@ -60,6 +65,16 @@ export class ReactiveEffect {
       activeEffect = this.parent;
       // 执行完effect后, 将父effect置为null
       this.parent = null;
+    }
+  }
+  // 停止effect
+  stop() {
+    // 判断effect是否是激活状态
+    if (this.active) {
+      // 停止effect之前，我们需要清理掉effect中依赖的所有属性
+      cleanupEffect(this);
+      // 停止effect后，将active置为false
+      this.active = false;
     }
   }
 }

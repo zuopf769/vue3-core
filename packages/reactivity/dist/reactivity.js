@@ -8,6 +8,9 @@ var activeEffect = void 0;
 function effect(fn) {
   const _effect = new ReactiveEffect(fn);
   _effect.run();
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 function cleanupEffect(effect2) {
   let { deps } = effect2;
@@ -40,6 +43,13 @@ var ReactiveEffect = class {
     } finally {
       activeEffect = this.parent;
       this.parent = null;
+    }
+  }
+  // 停止effect
+  stop() {
+    if (this.active) {
+      cleanupEffect(this);
+      this.active = false;
     }
   }
 };
