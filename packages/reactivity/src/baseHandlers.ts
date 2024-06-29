@@ -76,8 +76,13 @@ export function trigger(target, type, key?, newValue?, oldValue?) {
       // 避免死循环
       // 当前执行的effect会放到全局上；当又重新执行当前effect时， 则不再执行
       if (effect !== activeEffect) {
-        // 执行effect，如不处理，会有重复依赖收集的问题
-        effect.run();
+        // 有scheduler，则执行scheduler，没有才执行run
+        if (!effect.scheduler) {
+          // 执行effect，如不处理，会有重复依赖收集的问题
+          effect.run();
+        } else {
+          effect.scheduler();
+        }
       }
     });
   }

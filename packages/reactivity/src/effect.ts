@@ -2,10 +2,10 @@
 // 为了方便执行effect的时候依赖收集
 export let activeEffect = undefined;
 
-export function effect(fn) {
+export function effect(fn, options: any = {}) {
   // 将用户的函数，拿到变成一个响应式的函数
   // 创建一个响应式effect, 并且让effect立即执行
-  const _effect = new ReactiveEffect(fn);
+  const _effect = new ReactiveEffect(fn, options.scheduler);
   // 默认让用户的函数执行一次
   _effect.run();
 
@@ -39,7 +39,7 @@ export class ReactiveEffect {
   // 用来记录effect的父effect
   public parent = null;
   // 默认会将fn挂载到类的实例上
-  constructor(public fn) {}
+  constructor(public fn, public scheduler) {}
 
   run() {
     // 当运行的时候 我们需要将属性和对应的effect关联起来

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import {
+        reactive,
+        effect,
+      } from "/node_modules/vue/dist/vue.esm-browser.js";
+      // import {
+      //   reactive,
+      //   effect,
+      // } from "../packages/reactivity/dist/reactivity.js";
+      let obj = { flag: true, name: "zs", age: 19 };
+      // 正常写法
+
+      const state = reactive(obj);
+      // 返回的runner函数，可以让我们控制啥时候再去执行effect的run
+      const runner = effect(
+        () => {
+          // 副作用函数 (effect执行渲染了页面)
+          console.log("render");
+          document.body.innerHTML = state.name;
+        },
+        {
+          // 类似watch的回调函数, 就是提供了一个机制，让用户可以控制什么时候去执行effect
+          // 组件异步更新都是基于sheduler实现的（多次更新，只会执行一次effect）
+          // watch　computed 都是基于sheduler实现的
+          scheduler() {
+            // 调度函数 (当响应式数据更新时，会执行调度函数)
+            console.log("scheduler");
+            // 手动让effect重新执行，要不然有了sheduler，那么就永远不会执行effect了
+            runner();
+          },
+        }
+      );
+
+      setTimeout(() => {
+        // 停止更新后，就不会触发上面的effect再次执行了, 除非手动更新
+        state.name = "ls";
+      }, 1000);
+    </script>
+  </body>
+</html>
