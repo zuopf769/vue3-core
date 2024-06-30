@@ -1,4 +1,6 @@
 import { activeEffect } from "./effect";
+import { isObject } from "@vue/shared";
+import { reactive } from "./reactivity";
 
 export enum ReactiveFlags {
   "IS_REACTIVE" = "__v_isReactive",
@@ -16,9 +18,16 @@ export const muableHandlers: ProxyHandler<Record<any, any>> = {
       return true;
     }
 
-    // 使用Reflect.get获取代理对象上的属性，这样就可以保证后续的set、get操作都是针对代理对象
-    const res = Reflect.get(target, key, receiver);
+    // 依赖收集
     track(target, "get", key);
+    debugger;
+    // 使用Reflect.get获取代理对象上的属性，这样就可以保证后续的set、get操作都是针对代理对象
+    let res = Reflect.get(target, key, receiver); // 处理了this指向问题
+    // 如果取到的值是对象，则再进行深度代理，让他也变成一个响应式对象
+    if (isObject(res)) {
+      // 只有用户取值的时候，才二次代理，不用担心性能问题
+      res = reactive(res);
+    }
     return res;
   },
   set(target, key: any, value, receiver) {

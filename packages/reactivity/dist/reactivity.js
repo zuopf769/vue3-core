@@ -5,8 +5,8 @@ var isObject = (value) => {
 
 // packages/reactivity/src/effect.ts
 var activeEffect = void 0;
-function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+function effect(fn, options = {}) {
+  const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run();
   const runner = _effect.run.bind(_effect);
   runner.effect = _effect;
@@ -21,8 +21,9 @@ function cleanupEffect(effect2) {
 }
 var ReactiveEffect = class {
   // 默认会将fn挂载到类的实例上
-  constructor(fn) {
+  constructor(fn, scheduler) {
     this.fn = fn;
+    this.scheduler = scheduler;
     // stop停止effect会置为false
     this.active = true;
     // 收集effect中使用到的属性
@@ -62,8 +63,12 @@ var muableHandlers = {
     if (key === "__v_isReactive" /* IS_REACTIVE */) {
       return true;
     }
-    const res = Reflect.get(target, key, receiver);
     track(target, "get", key);
+    debugger;
+    let res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      res = reactive(res);
+    }
     return res;
   },
   set(target, key, value, receiver) {
@@ -103,7 +108,11 @@ function trigger(target, type, key, newValue, oldValue) {
     const effects = [...deps];
     effects.forEach((effect2) => {
       if (effect2 !== activeEffect) {
-        effect2.run();
+        if (!effect2.scheduler) {
+          effect2.run();
+        } else {
+          effect2.scheduler();
+        }
       }
     });
   }
