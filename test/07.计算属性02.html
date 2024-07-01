@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      // import {
+      //   reactive,
+      //   effect,
+      //   computed,
+      // } from "/node_modules/vue/dist/vue.esm-browser.js";
+      import {
+        reactive,
+        effect,
+        computed,
+      } from "../packages/reactivity/dist/reactivity.js";
+      let obj = { flag: true, name: "zs", age: 19, n: { m: 1 } };
+
+      // 计算属性的目的是根据状态衍生出新的状态，我们希望这个属性会有缓存功能，如果依赖的属性不变就不会重新计算
+      // 计算属性是懒执行的，只有当读取计算属性的时候才会执行
+      // 计算属性会缓存计算结果，如果计算属性依赖的属性没有变化，计算属性不会重新计算
+      const state = reactive(obj);
+      // 计算属性
+      let aliasName = computed({
+        get() {
+          // 计算属性的getter内部会取state.name, name会依赖收集effect,该effect是计算属性内部的effect
+          // name收集的是计算属性内部的effect
+          return "*" + state.name;
+        },
+        set(value) {},
+      });
+
+      // 计算属性也有依赖收集的功能
+      // 计算属性收集这个effect，当他依赖的属性name的值发生变化，需要重新出发此effect的执行
+      effect(() => {
+        app.innerHTML = aliasName.value;
+      });
+
+      // 在源码中计算属性是只读的，不能修改他自己的值
+      setTimeout(() => {
+        aliasName.value = 123;
+      }, 1000);
+
+      // 计算属性依赖属性的值变化， 会调用计算属性内在的scheduler执行， 先把dirty改为true，再出发计算属性的getter重新计算新值
+      setTimeout(() => {
+        state.name = "lisi";
+      }, 1000);
+    </script>
+  </body>
+</html>

@@ -2,6 +2,9 @@
 var isObject = (value) => {
   return value !== null && typeof value === "object";
 };
+var isFunction = (value) => {
+  return typeof value === "function";
+};
 
 // packages/reactivity/src/effect.ts
 var activeEffect = void 0;
@@ -64,7 +67,6 @@ var muableHandlers = {
       return true;
     }
     track(target, "get", key);
-    debugger;
     let res = Reflect.get(target, key, receiver);
     if (isObject(res)) {
       res = reactive(res);
@@ -91,11 +93,14 @@ function track(target, type, key) {
     if (!dep) {
       depsMap.set(key, dep = /* @__PURE__ */ new Set());
     }
-    let shouldTrack = dep.has(activeEffect);
-    if (!shouldTrack) {
-      dep.add(activeEffect);
-      activeEffect.deps.push(dep);
-    }
+    trackEffects(dep);
+  }
+}
+function trackEffects(dep) {
+  let shouldTrack = dep.has(activeEffect);
+  if (!shouldTrack) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
   }
 }
 function trigger(target, type, key, newValue, oldValue) {
@@ -104,6 +109,9 @@ function trigger(target, type, key, newValue, oldValue) {
     return;
   }
   const deps = depsMap.get(key);
+  triggerEffects(deps);
+}
+function triggerEffects(deps) {
   if (deps) {
     const effects = [...deps];
     effects.forEach((effect2) => {
@@ -131,9 +139,55 @@ function reactive(target) {
   reactiveMap.set(target, proxy);
   return proxy;
 }
+
+// packages/reactivity/src/computed.ts
+var noop = () => {
+};
+var ComputedRefImpl = class {
+  // 内置effect的fn是传入的getter
+  constructor(getter, setter) {
+    this.setter = setter;
+    // 意味着有这个属性，需要.value来取值
+    this.__v_ifRef = true;
+    // 是否脏，如果脏，则重新计算
+    this._dirty = true;
+    this.effect = new ReactiveEffect(getter, () => {
+      this._dirty = true;
+      triggerEffects(this.dep);
+    });
+  }
+  // 类的属性访问器，Object.defineProperty(obj, key, { get: fn })
+  // 取值的时候进行依赖收集
+  get value() {
+    if (activeEffect) {
+      trackEffects(this.dep || (this.dep = /* @__PURE__ */ new Set()));
+    }
+    if (this._dirty) {
+      this._dirty = false;
+      this._value = this.effect.run();
+    }
+    return this._value;
+  }
+  set value(newValue) {
+    this.setter(newValue);
+  }
+};
+function computed(getterOrOptions) {
+  let getter;
+  let setter;
+  if (isFunction(getterOrOptions)) {
+    getter = getterOrOptions;
+    setter = noop;
+  } else {
+    getter = getterOrOptions.get;
+    setter = getterOrOptions.set;
+  }
+  return new ComputedRefImpl(getter, setter);
+}
 export {
   ReactiveEffect,
   activeEffect,
+  computed,
   effect,
   reactive
 };

@@ -20,7 +20,6 @@ export const muableHandlers: ProxyHandler<Record<any, any>> = {
 
     // 依赖收集
     track(target, "get", key);
-    debugger;
     // 使用Reflect.get获取代理对象上的属性，这样就可以保证后续的set、get操作都是针对代理对象
     let res = Reflect.get(target, key, receiver); // 处理了this指向问题
     // 如果取到的值是对象，则再进行深度代理，让他也变成一个响应式对象
@@ -60,16 +59,30 @@ function track(target, type, key) {
     if (!dep) {
       depsMap.set(key, (dep = new Set())); // 初始化该属性的依赖effect {对象：{ 属性 :[ dep, dep ]}}
     }
-    // 看是否应该被收集
-    let shouldTrack = dep.has(activeEffect);
-    if (!shouldTrack) {
-      // 把当前活跃的efftct添加到属性的set中
-      dep.add(activeEffect);
-      // activeEffect收集依赖属性所有的 Set([effect1...]) ，这样后续可以用于清理
-      activeEffect.deps.push(dep);
-    }
+    // // 看是否应该被收集
+    // let shouldTrack = dep.has(activeEffect);
+    // if (!shouldTrack) {
+    //   // 把当前活跃的efftct添加到属性的set中
+    //   dep.add(activeEffect);
+    //   // activeEffect收集依赖属性所有的 Set([effect1...]) ，这样后续可以用于清理
+    //   activeEffect.deps.push(dep);
+    // }
+
+    trackEffects(dep);
   }
 }
+
+export function trackEffects(dep) {
+  // 看是否应该被收集
+  let shouldTrack = dep.has(activeEffect);
+  if (!shouldTrack) {
+    // 把当前活跃的efftct添加到属性的set中
+    dep.add(activeEffect);
+    // activeEffect收集依赖属性所有的 Set([effect1...]) ，这样后续可以用于清理
+    activeEffect.deps.push(dep);
+  }
+}
+
 export function trigger(target, type, key?, newValue?, oldValue?) {
   const depsMap = targetMap.get(target); // 获取对应的映射表 {属性1：[effect1..],属性2:[effect2...] }
   if (!depsMap) {
@@ -78,6 +91,27 @@ export function trigger(target, type, key?, newValue?, oldValue?) {
   }
   const deps = depsMap.get(key); // 查看该属性有没有被effect收集 | 查看该属性收集的effect
   // 执行该属性收集的所有effect
+  // if (deps) {
+  //   // 循环之前先拷贝，避免删除添加操作是同一个引用导致死循环
+  //   const effects = [...deps];
+  //   effects.forEach((effect) => {
+  //     // 避免死循环
+  //     // 当前执行的effect会放到全局上；当又重新执行当前effect时， 则不再执行
+  //     if (effect !== activeEffect) {
+  //       // 有scheduler，则执行scheduler，没有才执行run
+  //       if (!effect.scheduler) {
+  //         // 执行effect，如不处理，会有重复依赖收集的问题
+  //         effect.run();
+  //       } else {
+  //         effect.scheduler();
+  //       }
+  //     }
+  //   });
+  // }
+  triggerEffects(deps);
+}
+
+export function triggerEffects(deps) {
   if (deps) {
     // 循环之前先拷贝，避免删除添加操作是同一个引用导致死循环
     const effects = [...deps];
